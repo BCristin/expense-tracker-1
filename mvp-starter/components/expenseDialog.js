@@ -4,23 +4,24 @@ import LocalizationProvider from "@mui/lab/LocalizationProvider";
 import { Avatar, Button, Dialog, DialogActions, DialogContent, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useAuth } from "../firebase/auth";
-import { addReceipt } from "../firebase/firestore";
-import { uploadImage } from "../firebase/storage";
+import { addReceipt, updateReceipt } from "../firebase/firestore";
+import { replaceImage, uploadImage } from "../firebase/storage";
 import { RECEIPTS_ENUM } from "../pages/dashboard";
 import styles from "../styles/expenseDialog.module.scss";
 
 const DEFAULT_FILE_NAME = "No file selected";
 
-// Statul de formular implicit pentru dialog
-
+// Default form state for the dialog
 const DEFAULT_FORM_STATE = {
+	address: "",
+	amount: "",
+	date: null,
 	fileName: DEFAULT_FILE_NAME,
 	file: null,
-	date: null,
-	locationName: "",
-	address: "",
+	imageBucket: "",
+	imageUrl: "",
 	items: "",
-	amount: "",
+	locationName: "",
 };
 
 /*
@@ -74,28 +75,49 @@ export default function ExpenseDialog(props) {
 		setIsSubmitting(false);
 		props.onCloseDialog();
 	};
-	const handlerSubmit = async () => {
+	// Store receipt information to Storage and Firestore
+	const handleSubmit = async () => {
 		setIsSubmitting(true);
+
 		try {
-			// Adding receipt
-			// Store image into Storage
-			const bucket = await uploadImage(formFields.file, authUser.uid);
+			if (isEdit) {
+				// Check whether image was changed - fileName will be not null
+				if (formFields.fileName) {
+					// Store image into Storage
+					await replaceImage(formFields.file, formFields.imageBucket);
+				}
+				await updateReceipt(
+					formFields.id,
+					authUser.uid,
+					formFields.date,
+					formFields.locationName,
+					formFields.address,
+					formFields.items,
+					formFields.amount,
+					formFields.imageBucket
+				);
+			} else {
+				// Adding receipt
+				// Store image into Storage
+				const bucket = await uploadImage(formFields.file, authUser.uid);
 
-			// Store data into Firestore
-			await addReceipt(
-				authUser.uid,
-				formFields.date,
-				formFields.locationName,
-				formFields.address,
-				formFields.items,
-				formFields.amount,
-				bucket
-			);
-
-			props.onSuccess(RECEIPTS_ENUM.add);
+				// Store data into Firestore
+				await addReceipt(
+					authUser.uid,
+					formFields.date,
+					formFields.locationName,
+					formFields.address,
+					formFields.items,
+					formFields.amount,
+					bucket
+				);
+			}
+			props.onSuccess(isEdit ? RECEIPTS_ENUM.edit : RECEIPTS_ENUM.add);
 		} catch (error) {
-			props.onError(RECEIPTS_ENUM.add);
+			props.onError(isEdit ? RECEIPTS_ENUM.edit : RECEIPTS_ENUM.add);
 		}
+
+		// Clear all form data
 		closeDialog();
 	};
 
@@ -170,7 +192,7 @@ export default function ExpenseDialog(props) {
 						Submitting...
 					</Button>
 				) : (
-					<Button color="secondary" variant="contained" disabled={isDisabled()} onClick={handlerSubmit}>
+					<Button color="secondary" variant="contained" disabled={isDisabled()} onClick={handleSubmit}>
 						Submit
 					</Button>
 				)}

@@ -37,7 +37,8 @@ import ExpenseDialog from "../components/expenseDialog";
 import NavBar from "../components/navbar";
 import ReceiptRow from "../components/receiptRow";
 import { useAuth } from "../firebase/auth";
-import { getReceipts } from "../firebase/firestore";
+import { deleteReceipt, getReceipts } from "../firebase/firestore";
+import { deleteImage } from "../firebase/storage";
 import styles from "../styles/dashboard.module.scss";
 
 const ADD_SUCCESS = "Receipt was successfully added!";
@@ -89,6 +90,9 @@ export default function Dashboard() {
 		setSnackbarMessage(isSuccess ? SUCCESS_MAP[receiptEnum] : ERROR_MAP[receiptEnum]);
 		isSuccess ? setSuccessSnackbar(true) : setErrorSnackbar(true);
 		setAction(RECEIPTS_ENUM.none);
+		// if (isSuccess) {
+		// 	setReceipts(await getReceipts(authUser.uid));
+		// }
 	};
 
 	// Listen for changes to loading and authUser, redirect if needed
@@ -102,13 +106,14 @@ export default function Dashboard() {
 	// Get receipts once user is logged in
 	useEffect(async () => {
 		if (authUser) {
-			setReceipts(await getReceipts(authUser.uid, setReceipts, setIsLoadingReceipts));
+			const unsubscribe = await getReceipts(authUser.uid, setReceipts, setIsLoadingReceipts);
+			return () => unsubscribe();
 		}
 	}, [authUser]);
 
-	////#endregion
+	//#endregion
 
-	// For all of the onClick functions, update the action and fields for updating
+	// Pentru toate funcțiile OnClick, actualizați acțiunea și câmpurile pentru actualizare
 
 	const onClickAdd = () => {
 		setAction(RECEIPTS_ENUM.add);
@@ -129,6 +134,18 @@ export default function Dashboard() {
 	const resetDelete = () => {
 		setAction(RECEIPTS_ENUM.none);
 		setDeleteReceiptId("");
+	};
+
+	const onDelete = async () => {
+		let isSuccess = true;
+		try {
+			await deleteReceipt(deleteReceiptId);
+			await deleteImage(deleteReceiptImageBucket);
+		} catch (errror) {
+			isSuccess = false;
+		}
+		resetDelete();
+		onResult(RECEIPTS_ENUM.delete, isSuccess);
 	};
 
 	return !authUser ? (
@@ -167,7 +184,7 @@ export default function Dashboard() {
 						<AddIcon />
 					</IconButton>
 				</Stack>
-				//#region //!Storage
+				{/* #region //!Storage */}
 				{receipts.map((receipt) => (
 					<div key={receipt.id}>
 						<Divider light />
@@ -178,7 +195,7 @@ export default function Dashboard() {
 						/>
 					</div>
 				))}
-				//#endregion
+				{/* #endregion  */}
 			</Container>
 
 			<ExpenseDialog
@@ -198,7 +215,7 @@ export default function Dashboard() {
 					<Button color="secondary" variant="outlined" onClick={resetDelete}>
 						Cancel
 					</Button>
-					<Button color="secondary" variant="contained" autoFocus>
+					<Button color="secondary" variant="contained" autoFocus onClick={onDelete}>
 						Delete
 					</Button>
 				</DialogActions>

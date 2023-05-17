@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { db } from "./firebase";
+import { getDownloadURL } from "./storage";
 
 // Name of receipt collection in Firestore
 const RECEIPT_COLLECTION = "receipts";
@@ -32,13 +33,22 @@ const RECEIPT_COLLECTION = "receipts";
  - uid: user ID who the expense is for
 */
 export function addReceipt(uid, date, locationName, address, items, amount, imageBucket) {
-	addDoc(collection(db, RECEIPT_COLLECTION), {
-		uid,
-		date,
-		locationName,
-		address,
-		items,
-		amount,
-		imageBucket,
-	});
+	addDoc(collection(db, RECEIPT_COLLECTION), { uid, date, locationName, address, items, amount, imageBucket });
 }
+//#region   //!Storage
+export async function getReceipts(uid) {
+	const receipts = query(collection(db, RECEIPT_COLLECTION), where("uid", "==", uid), orderBy("date", "desc"));
+	const querySnapshot = await getDocs(receipts);
+	let allReceipts = [];
+	for (const documentSnapshot of querySnapshot.docs) {
+		const receipt = documentSnapshot.data();
+		await allReceipts.push({
+			...receipt,
+			date: receipt["date"].toDate(),
+			id: documentSnapshot.id,
+			imageUrl: await getDownloadURL(receipt["imageBucket"]),
+		});
+	}
+	return allReceipts;
+}
+//#endregion

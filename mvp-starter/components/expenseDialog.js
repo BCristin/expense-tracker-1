@@ -1,16 +1,7 @@
 import AdapterDateFns from "@mui/lab/AdapterDateFns";
 import DatePicker from "@mui/lab/DatePicker";
 import LocalizationProvider from "@mui/lab/LocalizationProvider";
-import {
-	Avatar,
-	Button,
-	Dialog,
-	DialogActions,
-	DialogContent,
-	Stack,
-	TextField,
-	Typography,
-} from "@mui/material";
+import { Avatar, Button, Dialog, DialogActions, DialogContent, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useAuth } from "../firebase/auth";
 import { addReceipt } from "../firebase/firestore";
@@ -66,7 +57,10 @@ export default function ExpenseDialog(props) {
 
 	// Actualizați câmpul dat în formular
 	const updateFormField = (event, field) => {
-		setFormFields((prevState) => ({ ...prevState, [field]: event.target.value }));
+		setFormFields((prevState) => ({
+			...prevState,
+			[field]: event.target.value,
+		}));
 	};
 
 	// Setați câmpurile relevante pentru imaginea de primire
@@ -106,23 +100,14 @@ export default function ExpenseDialog(props) {
 	};
 
 	return (
-		<Dialog
-			classes={{ paper: styles.dialog }}
-			onClose={() => closeDialog()}
-			open={props.showDialog}
-			component="form"
-		>
+		<Dialog classes={{ paper: styles.dialog }} onClose={() => closeDialog()} open={props.showDialog} component="form">
 			<Typography variant="h4" className={styles.title}>
 				{isEdit ? "EDIT" : "ADD"} EXPENSE
 			</Typography>
 			<DialogContent className={styles.fields}>
 				<Stack direction="row" spacing={2} className={styles.receiptImage}>
 					{isEdit && !formFields.fileName && (
-						<Avatar
-							alt="receipt image"
-							src={formFields.imageUrl}
-							sx={{ marginRight: "1em" }}
-						/>
+						<Avatar alt="receipt image" src={formFields.imageUrl} sx={{ marginRight: "1em" }} />
 					)}
 					<Button variant="outlined" component="label" color="secondary">
 						Upload Receipt
@@ -185,12 +170,7 @@ export default function ExpenseDialog(props) {
 						Submitting...
 					</Button>
 				) : (
-					<Button
-						color="secondary"
-						variant="contained"
-						disabled={isDisabled()}
-						onClick={handlerSubmit}
-					>
+					<Button color="secondary" variant="contained" disabled={isDisabled()} onClick={handlerSubmit}>
 						Submit
 					</Button>
 				)}

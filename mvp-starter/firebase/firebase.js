@@ -21,17 +21,17 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-	apiKey: "AIzaSyCwpXyhIsNR8ARRohj9t42JRvgZJ2YSk_o",
-	authDomain: "my-coin-keeper.firebaseapp.com",
-	projectId: "my-coin-keeper",
-	storageBucket: "my-coin-keeper.appspot.com",
-	messagingSenderId: "148092078226",
-	appId: "1:148092078226:web:cee50a60b9968d32cabe4b",
-	measurementId: "G-HVT482YR6L",
+	apiKey: "AIzaSyBxRgl7Ri4WkEldCpNPSoKvPsuSb95WYxI",
+	authDomain: "expense-tracker2-34481.firebaseapp.com",
+	projectId: "expense-tracker2-34481",
+	storageBucket: "expense-tracker2-34481.appspot.com",
+	messagingSenderId: "890132496858",
+	appId: "1:890132496858:web:8addab3a496bcd2308c0e3",
+	measurementId: "G-FH3209C642",
 };
 
 // Initialize Firebase
-export const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig, "expense");
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);

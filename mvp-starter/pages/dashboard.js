@@ -24,6 +24,7 @@ import {
 	Dialog,
 	DialogActions,
 	DialogContent,
+	Divider,
 	IconButton,
 	Snackbar,
 	Stack,
@@ -34,7 +35,9 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import ExpenseDialog from "../components/expenseDialog";
 import NavBar from "../components/navbar";
+import ReceiptRow from "../components/receiptRow";
 import { useAuth } from "../firebase/auth";
+import { getReceipts } from "../firebase/firestore";
 import styles from "../styles/dashboard.module.scss";
 
 const ADD_SUCCESS = "Receipt was successfully added!";
@@ -73,6 +76,7 @@ export default function Dashboard() {
 	const [isLoadingReceipts, setIsLoadingReceipts] = useState(true);
 	const [deleteReceiptId, setDeleteReceiptId] = useState("");
 	const [deleteReceiptImageBucket, setDeleteReceiptImageBucket] = useState("");
+	const [receipts, setReceipts] = useState([]);
 	const [updateReceipt, setUpdateReceipt] = useState({});
 
 	// State involved in snackbar
@@ -93,6 +97,16 @@ export default function Dashboard() {
 			router.push("/");
 		}
 	}, [authUser, isLoading]);
+
+	//#region   //!Storage
+	// Get receipts once user is logged in
+	useEffect(async () => {
+		if (authUser) {
+			setReceipts(await getReceipts(authUser.uid, setReceipts, setIsLoadingReceipts));
+		}
+	}, [authUser]);
+
+	////#endregion
 
 	// For all of the onClick functions, update the action and fields for updating
 
@@ -131,8 +145,7 @@ export default function Dashboard() {
 					open={showSuccessSnackbar}
 					autoHideDuration={1500}
 					onClose={() => setSuccessSnackbar(false)}
-					anchorOrigin={{ horizontal: "center", vertical: "top" }}
-				>
+					anchorOrigin={{ horizontal: "center", vertical: "top" }}>
 					<Alert onClose={() => setSuccessSnackbar(false)} severity="success">
 						{snackbarMessage}
 					</Alert>
@@ -141,26 +154,31 @@ export default function Dashboard() {
 					open={showErrorSnackbar}
 					autoHideDuration={1500}
 					onClose={() => setErrorSnackbar(false)}
-					anchorOrigin={{ horizontal: "center", vertical: "top" }}
-				>
+					anchorOrigin={{ horizontal: "center", vertical: "top" }}>
 					<Alert onClose={() => setErrorSnackbar(false)} severity="error">
 						{snackbarMessage}
 					</Alert>
 				</Snackbar>
-
 				<Stack direction="row" sx={{ paddingTop: "1.5em" }}>
 					<Typography variant="h4" sx={{ lineHeight: 2, paddingRight: "0.5em" }}>
 						EXPENSES
 					</Typography>
-					<IconButton
-						aria-label="edit"
-						color="secondary"
-						onClick={onClickAdd}
-						className={styles.addButton}
-					>
+					<IconButton aria-label="edit" color="secondary" onClick={onClickAdd} className={styles.addButton}>
 						<AddIcon />
 					</IconButton>
 				</Stack>
+				//#region //!Storage
+				{receipts.map((receipt) => (
+					<div key={receipt.id}>
+						<Divider light />
+						<ReceiptRow
+							receipt={receipt}
+							onEdit={() => onUpdate(receipt)}
+							onDelete={() => onClickDelete(receipt.id, receipt.imageBucket)}
+						/>
+					</div>
+				))}
+				//#endregion
 			</Container>
 
 			<ExpenseDialog
@@ -168,8 +186,7 @@ export default function Dashboard() {
 				showDialog={action === RECEIPTS_ENUM.add || action === RECEIPTS_ENUM.edit}
 				onError={(receiptEnum) => onResult(receiptEnum, false)}
 				onSuccess={(receiptEnum) => onResult(receiptEnum, true)}
-				onCloseDialog={() => setAction(RECEIPTS_ENUM.none)}
-			></ExpenseDialog>
+				onCloseDialog={() => setAction(RECEIPTS_ENUM.none)}></ExpenseDialog>
 			<Dialog open={action === RECEIPTS_ENUM.delete} onClose={resetDelete}>
 				<Typography variant="h4" className={styles.title}>
 					DELETE EXPENSE

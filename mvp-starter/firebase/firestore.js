@@ -15,6 +15,30 @@
  * limitations under the License.
  */
 
-import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore'; 
-import { db } from './firebase';
-import { getDownloadURL } from './storage';
+import { addDoc, collection } from "firebase/firestore";
+import { db } from "./firebase";
+
+// Name of receipt collection in Firestore
+const RECEIPT_COLLECTION = "receipts";
+
+/* 
+ Adds receipt to Firestore with given receipt information:
+ - address: address at which purchase was made
+ - amount: amount of expense
+ - date: date of purchase
+ - imageBucket: bucket at which receipt image is stored in Firebase Storage
+ - items: items purchased
+ - locationName: name of location
+ - uid: user ID who the expense is for
+*/
+export function addReceipt(uid, date, locationName, address, items, amount, imageBucket) {
+	addDoc(collection(db, RECEIPT_COLLECTION), {
+		uid,
+		date,
+		locationName,
+		address,
+		items,
+		amount,
+		imageBucket,
+	});
+}
